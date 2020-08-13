@@ -14,6 +14,10 @@ namespace TicTacToe
 
         MinimaxAlgoritm minimaxAlgoritm;
 
+        AlphaBetaPrunning alphaBetaPrunning;
+
+        PerfectAlphaBetaPrunning perfectAlphaBetaPrunning;
+
 
         public readonly Vector2[] blockPositions =
         {
@@ -33,6 +37,10 @@ namespace TicTacToe
             CreateBoard();
 
             minimaxAlgoritm = new MinimaxAlgoritm();
+
+            alphaBetaPrunning = new AlphaBetaPrunning();
+
+            perfectAlphaBetaPrunning = new PerfectAlphaBetaPrunning();
 
             StartToGame();
         }
@@ -107,7 +115,7 @@ namespace TicTacToe
 
         public void PlayAI()
         {
-            Block block = minimaxAlgoritm.GetBestBlock(blocks, Sign.O, Sign.X);
+            Block block = perfectAlphaBetaPrunning.GetBestBlock(blocks, Sign.O, Sign.X);
 
             if (block != null)
             {

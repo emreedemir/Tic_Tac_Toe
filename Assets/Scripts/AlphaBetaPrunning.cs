@@ -5,8 +5,12 @@ using System;
 
 namespace TicTacToe
 {
-    public class MinimaxAlgoritm
+    public class AlphaBetaPrunning
     {
+        private static int MAX = 1000;
+
+        private static int MIN = -1000;
+
         private bool IsEmptyBlock(List<Block> board)
         {
             return board.Find(x => x.sign == Sign.Empty);
@@ -41,18 +45,22 @@ namespace TicTacToe
             }
 
             //Diagonals
-
             if (board.FindAll(x => x.blockPosition.x == x.blockPosition.y).TrueForAll(x => x.sign == currentPlayer))
             {
                 return 10;
             }
-            else if (board.FindAll(x => x.blockPosition.x == x.blockPosition.y).TrueForAll(x => x.sign == currentPlayer))
+            else if (board.FindAll(x => x.blockPosition.x == x.blockPosition.y).TrueForAll(x => x.sign == oppositePlayer))
             {
                 return -10;
             }
 
             List<Block> negDiagonal =
-                new List<Block>() { board.Find(x => x.blockPosition == new Vector2(0, 2)), board.Find(x => x.blockPosition == new Vector2(1, 1)), board.Find(x => x.blockPosition == new Vector2(2, 0)) };
+                new List<Block>()
+                {
+                    board.Find(x => x.blockPosition == new Vector2(0, 2)),
+                    board.Find(x => x.blockPosition == new Vector2(1, 1)),
+                    board.Find(x => x.blockPosition == new Vector2(2, 0))
+                };
 
             if (negDiagonal.TrueForAll(x => x.sign == currentPlayer))
             {
@@ -66,9 +74,9 @@ namespace TicTacToe
             return 0;
         }
 
-        private int Minimax(List<Block> board, Sign currentPlayer, Sign oppositePlayer, int depth, bool isMax)
+        public int Minimax(List<Block> blocks, Sign currentPlayer, Sign oppositePlayer, int alpha, int beta, bool isMax)
         {
-            int score = EvaluateBoard(board, currentPlayer, oppositePlayer);
+            int score = EvaluateBoard(blocks, currentPlayer, oppositePlayer);
 
             if (score == 10)
             {
@@ -80,25 +88,34 @@ namespace TicTacToe
                 return -10;
             }
 
-            if (!IsEmptyBlock(board))
+            if (!IsEmptyBlock(blocks))
             {
                 return 0;
             }
 
-
             if (isMax)
             {
-                int best = -1000;
+                int best = MIN;
 
-                for (int i = 0; i < board.Count; i++)
+                for (int i = 0; i < blocks.Count; i++)
                 {
-                    if (board[i].sign == Sign.Empty)
+                    if (blocks[i].sign == Sign.Empty)
                     {
-                        board[i].sign = currentPlayer;
+                        blocks[i].sign = currentPlayer;
 
-                        best = Mathf.Max(best, Minimax(board, currentPlayer, oppositePlayer, depth + 1, !isMax));
+                        int value = Minimax(blocks, currentPlayer, oppositePlayer, alpha, beta, !isMax);
 
-                        board[i].sign = Sign.Empty;
+                        blocks[i].sign = Sign.Empty;
+
+                        best = Mathf.Max(best, value);
+
+                        alpha = Math.Max(alpha, best);
+
+                        if (beta <= alpha)
+                        {
+                            break;
+                        }
+
                     }
                 }
 
@@ -107,50 +124,58 @@ namespace TicTacToe
             }
             else
             {
-                Debug.Log("Minimize");
-                int best = 1000;
+                int best = MAX;
 
-                for (int i = 0; i < board.Count; i++)
+                for (int i = 0; i < blocks.Count; i++)
                 {
-                    if (board[i].sign == Sign.Empty)
+                    if (blocks[i].sign == Sign.Empty)
                     {
+                        blocks[i].sign = oppositePlayer;
 
-                        board[i].sign = oppositePlayer;
-
-                        best = Mathf.Min(best, Minimax(board, currentPlayer, oppositePlayer, depth + 1, !isMax));
+                        int value = Minimax(blocks, currentPlayer, oppositePlayer, alpha, beta, !isMax);
 
 
-                        board[i].sign = Sign.Empty;
+                        blocks[i].sign = Sign.Empty;
+
+                        best = Math.Min(best, value);
+
+                        beta = Math.Min(beta, best);
+
+                        if (beta <= alpha)
+                        {
+                            break;
+                        }
                     }
                 }
 
                 return best;
-
             }
         }
 
-        public Block GetBestBlock(List<Block> board, Sign currentPlayerSign, Sign oppositePlayerSign)
+        public Block GetBestBlock(List<Block> blocks, Sign currentPlayer, Sign oppositePlayer)
         {
             Block block = null;
 
-            int bestScore = -1000;
+            int best = -1000;
 
-            for (int i = 0; i < board.Count; i++)
+            for (int i = 0; i < blocks.Count; i++)
             {
-
-                if (board[i].sign == Sign.Empty)
+                if (blocks[i].sign == Sign.Empty)
                 {
-                    board[i].sign = currentPlayerSign;
+                    blocks[i].sign = currentPlayer;
 
-                    int score = Minimax(board, currentPlayerSign, oppositePlayerSign, 0, false);
+                    int bestValue = Minimax(blocks, currentPlayer, oppositePlayer, MIN, MAX, false);
 
-                    board[i].sign = Sign.Empty;
+                    blocks[i].sign = Sign.Empty;
 
-                    if (score > bestScore)
+
+                    if (bestValue > best)
                     {
-                        bestScore = score;
+                        Debug.Log(bestValue);
 
-                        block = board[i];
+                        best = bestValue;
+
+                        block = blocks[i];
                     }
                 }
             }
@@ -158,6 +183,4 @@ namespace TicTacToe
             return block;
         }
     }
-
 }
-
